@@ -3,6 +3,8 @@ from time import perf_counter as _perf_counter
 import random as _random
 from hashlib import sha256 as _sha256
 import warnings as _warnings 
+import os as _os
+from pathlib import Path as _Path
 
 class SymmetricRSA:
     def __init__(self, n_dims:int, seed:str=None):
@@ -18,9 +20,12 @@ class SymmetricRSA:
         self.seed = self.__gen_seed() if (seed is None) else seed
         self.__seed = int.from_bytes(_sha256(self.seed.encode()).digest())
         _random.seed(self.__seed)
+
+        self.__download_dependencies()
+        self.primes_path = _Path(_os.path.dirname(_os.path.realpath(__file__))) / "data" / "10-digit-primes.npy"
         
         if self.primes is None:
-            self.primes = _np.load("../data/10-digit-primes.npy")
+            self.primes = _np.load(self.primes_path)
         
         self.__keys = self.__gen_keys()
         self.__inv_keys = [_np.linalg.inv(i) for i in self.__keys]
@@ -79,7 +84,17 @@ class SymmetricRSA:
 
     def __gen_seed(self) -> str:
         start = _perf_counter()
-        self.primes = _np.load("../data/10-digit-primes.npy")
+        self.primes = _np.load(self.primes_path)
         end = _perf_counter()
         # Use time taked for IO oprtation as an additional source of entropy
         return _sha256(f'{start}{end}{_random.random()}'.encode()).hexdigest()
+
+    def __download_dependencies(self):
+        primes_path = _Path(_os.path.dirname(_os.path.realpath(__file__))) / "data" / "10-digit-primes.npy"
+        data_path = _Path(_os.path.dirname(_os.path.realpath(__file__))) / "data"
+        if "10-digit-primes.npy" not in _os.listdir(data_path):
+            import requests as _requests
+            res = _requests.get('https://github.com/akneni/cryptoserpent/raw/master/data/10-digit-primes.npy')
+            with open(primes_path, 'wb') as f:
+                f.write(res.content)
+
