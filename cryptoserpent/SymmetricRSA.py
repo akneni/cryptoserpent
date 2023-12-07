@@ -12,7 +12,7 @@ class SymmetricRSA:
             print('Random Seed should be at least 8 characters for security.')
         if n_dims < 3:
             print('n_dims should be at least 3 (preferably 5) for seurity')
-        elif n_dims < 24:
+        elif n_dims > 24:
             raise ValueError('n_dims greater than 24 not supported')
         self.n_dims = n_dims
         self.primes = None
